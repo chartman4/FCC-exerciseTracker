@@ -34,22 +34,12 @@ var userSchema = new mongoose.Schema({
 
 var User = mongoose.model("User", userSchema);
 
-var _ = require('lodash');
-var sortBy = require('lodash.sortby');
-
-
 function sortExercises(exercises) {
     let dateStr;
-    console.log("before sort!");
-    // let orderedExercises = _.sortBy(exercises, function (o) { return new moment(o.date); }).reverse();
     let results = [];
-    // let orderedExercises = _.sortBy(exercises, function (o) { return new moment(o.date); }).reverse();
-    let orderedExercises = exercises.sort((a, b) => moment.utc(a.date, "ddd MMM DD YYYY").diff(moment.utc(b.date, "ddd MMM DD YYYY")));
+    let orderedExercises = exercises.sort((a, b) => moment.utc(a.date, "ddd MMM DD YYYY").diff(moment.utc(b.date, "ddd MMM DD YYYY"))).reverse();
 
-    console.log("ordered: ");
-    console.log(orderedExercises);
     orderedExercises.forEach(x => {
-        // console.log(x.date);
         dateStr = moment(x.date, "ddd MMM DD YYYY").format("ddd MMM DD YYYY");
         results.push({ _id: x._id, description: x.description, duration: x.duration, date: dateStr })
     })
@@ -76,7 +66,6 @@ app.get('/api/exercise/users', (req, res) => {
 // http://localhost:3000/api/exercise/log?userId=5c239a0edfc0ab4ff8d9e933
 // http://localhost:3000/api/exercise/log?userId=5c239a0edfc0ab4ff8d9e933&from=2011-01-02&to=2018-12-26&limit=5
 app.get('/api/exercise/log/', (req, res) => {
-    console.log("START LOG");
     let userId = req.query.userId;
     let ckdates;
     let fromMoment;
@@ -91,11 +80,6 @@ app.get('/api/exercise/log/', (req, res) => {
     }
 
     let limit = parseInt(req.query.limit);
-
-    console.log(ckdates);
-    console.log(fromMoment);
-    console.log(toMoment);
-    console.log(limit);
 
     // if invalid parameters return error message
     if (ckdates && !fromMoment.isValid())
@@ -114,17 +98,12 @@ app.get('/api/exercise/log/', (req, res) => {
                 user.exercise.forEach(x => {
                     let dateStr = " "; //x.date.getDay();
                     let xMoment = moment.utc(x.date);
-                    // console.log(xMoment);
 
-                    // console.log((xMoment.isSameOrAfter(fromMoment, 'day')) &&
-                    // (xMoment.isSameOrBefore(toMoment, 'day')));
-
-                    if (!ckdates || ((xMoment.isSameOrAfter(fromMoment, 'day')) &&
-                        (xMoment.isSameOrBefore(toMoment), 'day'))) {
-                        dateStr = moment(x.date).format("ddd MMM DD YYYY");
+                    if (!ckdates || (xMoment.isSameOrAfter(fromMoment, 'day') &&
+                        xMoment.isSameOrBefore(toMoment, 'day'))) {
+                        dateStr = xMoment.format("ddd MMM DD YYYY");
                         exercises.push({ description: x.description, duration: x.duration, date: dateStr });
                     }
-
                 });
 
                 let sortedExercises = sortExercises(exercises);
@@ -146,19 +125,11 @@ app.post('/api/exercise/add', (req, res) => {
 
     let dateObjectName;
     if (req.body.date === "") dateObjectName = Date.now();
-    else {
-        // var parts = dateObjectName.match(/(\d+)/g);
-        // dateObjectName = new Date(parts[0], parts[1] - 1, parts[2]); // months are 0-based
-        dateObjectName = moment(req.body.date);
-    }
-
-    console.log(dateObjectName);
-
-    let dur = parseInt(req.body.duration);
+    else dateObjectName = moment(req.body.date);
 
     let exercise = {
         description: req.body.description,
-        duration: dur,
+        duration: parseInt(req.body.duration),
         date: dateObjectName
     };
 
@@ -173,7 +144,6 @@ app.post('/api/exercise/add', (req, res) => {
             } else {
                 let exercises = sortExercises(model.exercise);
                 let response = { _id: model._id, name: model.name, exercises: exercises }
-
                 res.send(response);
             }
         }
