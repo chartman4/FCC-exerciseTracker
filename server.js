@@ -34,10 +34,6 @@ var userSchema = new mongoose.Schema({
 
 var User = mongoose.model("User", userSchema);
 
-var _ = require('lodash');
-var sortBy = require('lodash.sortby');
-
-
 function sortExercises(exercises) {
     let dateStr;
     let results = [];
